@@ -1,5 +1,6 @@
+import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { clustersAPI, postsAPI } from '../../services/api';
 
 interface Cluster {
@@ -23,6 +24,7 @@ interface Post {
 }
 
 export default function ExploreScreen() {
+  const router = useRouter();
   const [clusters, setClusters] = useState<Cluster[]>([]);
   const [selectedCluster, setSelectedCluster] = useState<string | null>(null);
   const [clusterPosts, setClusterPosts] = useState<Post[]>([]);
@@ -46,6 +48,12 @@ export default function ExploreScreen() {
           name: 'NCR Students',
           memberCount: 47,
           demographics: { avgBudget: 3200, commonSituations: ['student'] }
+        },
+        {
+          clusterId: 'cebu_professionals',
+          name: 'Cebu Professionals',
+          memberCount: 34,
+          demographics: { avgBudget: 15000, commonSituations: ['professional'] }
         },
         {
           clusterId: 'davao_families',
@@ -100,165 +108,361 @@ export default function ExploreScreen() {
     }
   };
 
+  const handleBack = () => {
+    if (selectedCluster) {
+      setSelectedCluster(null);
+    } else {
+      router.back();
+    }
+  };
+
   if (loading && clusters.length === 0) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#1e40af" />
-        <Text>Loading communities...</Text>
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#1e40af" />
+          <Text style={styles.loadingText}>Loading communities...</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Explore Clusters</Text>
-
-      {!selectedCluster ? (
-        <ScrollView>
-          <Text style={styles.sectionTitle}>Money Saving Communities</Text>
-          {clusters.map(cluster => (
-            <TouchableOpacity
-              key={cluster.clusterId}
-              style={styles.clusterCard}
-              onPress={() => loadClusterPosts(cluster.clusterId)}
-            >
-              <Text style={styles.clusterName}>{cluster.name}</Text>
-              <Text>{cluster.memberCount} members</Text>
-              <Text>Avg budget: ₱{cluster.demographics.avgBudget}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      ) : (
-        <ScrollView>
-          <TouchableOpacity onPress={() => setSelectedCluster(null)}>
-            <Text style={styles.backButton}>← Back to Clusters</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        {/* Header with Back Button */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+            <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
-
-          <Text style={styles.sectionTitle}>
-            Posts from {clusters.find(c => c.clusterId === selectedCluster)?.name}
+          <Text style={styles.title}>
+            {selectedCluster
+              ? clusters.find(c => c.clusterId === selectedCluster)?.name
+              : 'Explore Clusters'
+            }
           </Text>
+          <View style={styles.headerSpacer} />
+        </View>
 
-          {loading ? (
-            <ActivityIndicator size="large" color="#1e40af" style={styles.loader} />
-          ) : clusterPosts.length === 0 ? (
-            <Text style={styles.noPosts}>No posts yet in this cluster. Be the first to share!</Text>
-          ) : (
-            clusterPosts.map(post => (
-              <View key={post._id} style={styles.postCard}>
-                <Text style={styles.postAuthor}>{post.anonymousAuthorId}</Text>
-                <Text style={styles.postTitle}>{post.title}</Text>
-                <Text style={styles.postContent}>{post.content}</Text>
-                <Text style={styles.postDetails}>
-                  Budget: ₱{post.budget} | Lasted: {post.durationDays} days
-                </Text>
-                <Text style={styles.postDetails}>
-                  Strategies: {post.strategies.join(', ')}
-                </Text>
-                <Text style={styles.rating}>
-                  ⭐ {post.avgRating} ({post.ratingCount} ratings)
+        {!selectedCluster ? (
+          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            <Text style={styles.sectionTitle}>Money Saving Communities</Text>
+            <Text style={styles.sectionSubtitle}>
+              Join communities that match your situation and learn proven strategies
+            </Text>
+
+            {clusters.map((cluster, index) => (
+              <TouchableOpacity
+                key={cluster.clusterId}
+                style={[
+                  styles.clusterCard,
+                  index === clusters.length - 1 && styles.lastClusterCard
+                ]}
+                onPress={() => loadClusterPosts(cluster.clusterId)}
+              >
+                <View style={styles.clusterHeader}>
+                  <Text style={styles.clusterName}>{cluster.name}</Text>
+                  <View style={styles.memberBadge}>
+                    <Text style={styles.memberBadgeText}>{cluster.memberCount} members</Text>
+                  </View>
+                </View>
+
+                <View style={styles.clusterDetails}>
+                  <View style={styles.detailItem}>
+                    <Text style={styles.detailLabel}>Avg Budget:</Text>
+                    <Text style={styles.detailValue}>₱{cluster.demographics.avgBudget.toLocaleString()}</Text>
+                  </View>
+                  <View style={styles.detailItem}>
+                    <Text style={styles.detailLabel}>Common Situations:</Text>
+                    <Text style={styles.detailValue}>
+                      {cluster.demographics.commonSituations.join(', ')}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.exploreButton}>
+                  <Text style={styles.exploreButtonText}>View Community →</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        ) : (
+          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            <Text style={styles.sectionSubtitle}>
+              Real strategies from community members
+            </Text>
+
+            {loading ? (
+              <View style={styles.postsLoading}>
+                <ActivityIndicator size="large" color="#1e40af" />
+                <Text style={styles.loadingText}>Loading posts...</Text>
+              </View>
+            ) : clusterPosts.length === 0 ? (
+              <View style={styles.noPosts}>
+                <Text style={styles.noPostsTitle}>No posts yet</Text>
+                <Text style={styles.noPostsText}>
+                  Be the first to share your money-saving strategy in this community!
                 </Text>
               </View>
-            ))
-          )}
-        </ScrollView>
-      )}
-    </View>
+            ) : (
+              clusterPosts.map((post, index) => (
+                <View
+                  key={post._id}
+                  style={[
+                    styles.postCard,
+                    index === clusterPosts.length - 1 && styles.lastPostCard
+                  ]}
+                >
+                  <View style={styles.postHeader}>
+                    <Text style={styles.postAuthor}>{post.anonymousAuthorId}</Text>
+                    <View style={styles.ratingBadge}>
+                      <Text style={styles.ratingBadgeText}>⭐ {post.avgRating}</Text>
+                    </View>
+                  </View>
+
+                  <Text style={styles.postTitle}>{post.title}</Text>
+                  <Text style={styles.postContent}>{post.content}</Text>
+
+                  <View style={styles.postDetails}>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Budget: </Text>
+                      <Text style={styles.detailValue}>₱{post.budget.toLocaleString()}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Duration: </Text>
+                      <Text style={styles.detailValue}>{post.durationDays} days</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Strategies: </Text>
+                      <Text style={styles.detailValue}>
+                        {post.strategies.map(strategy => strategy.replace('_', ' ')).join(', ')}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text style={styles.ratingCount}>({post.ratingCount} ratings)</Text>
+                </View>
+              ))
+            )}
+          </ScrollView>
+        )}
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+  },
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#f5f5f5',
+    paddingHorizontal: 20,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f8fafc',
   },
-  loader: {
-    marginVertical: 20,
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#6b7280',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    marginTop: 10,
+  },
+  backButton: {
+    padding: 8,
+    marginLeft: -8,
+  },
+  backButtonText: {
+    fontSize: 24,
+    color: '#1e40af',
+    fontWeight: 'bold',
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 20,
     color: '#1e40af',
+    textAlign: 'center',
+    flex: 1,
+  },
+  headerSpacer: {
+    width: 40,
+  },
+  scrollView: {
+    flex: 1,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 15,
+    color: '#1f2937',
+    marginBottom: 8,
     marginTop: 10,
+  },
+  sectionSubtitle: {
+    fontSize: 16,
+    color: '#6b7280',
+    marginBottom: 25,
+    lineHeight: 22,
   },
   clusterCard: {
     backgroundColor: 'white',
     padding: 20,
-    borderRadius: 10,
-    marginBottom: 15,
+    borderRadius: 16,
+    marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 12,
+    elevation: 5,
+    borderLeftWidth: 4,
+    borderLeftColor: '#1e40af',
+  },
+  lastClusterCard: {
+    marginBottom: 30,
+  },
+  clusterHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   clusterName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1f2937',
+  },
+  memberBadge: {
+    backgroundColor: '#dbeafe',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  memberBadgeText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1e40af',
+  },
+  clusterDetails: {
+    marginBottom: 16,
+  },
+  detailItem: {
+    flexDirection: 'row',
+    marginBottom: 6,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    marginBottom: 4,
+    flexWrap: 'wrap',
+  },
+  detailLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4b5563',
+    marginRight: 6,
+  },
+  detailValue: {
+    fontSize: 14,
+    color: '#6b7280',
+    flex: 1,
+  },
+  exploreButton: {
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f3f4f6',
+  },
+  exploreButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1e40af',
+  },
+  postsLoading: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  noPosts: {
+    alignItems: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  noPostsTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 5,
+    color: '#6b7280',
+    marginBottom: 8,
   },
-  backButton: {
+  noPostsText: {
     fontSize: 16,
-    color: '#1e40af',
-    marginBottom: 15,
-    fontWeight: 'bold',
+    color: '#9ca3af',
+    textAlign: 'center',
+    lineHeight: 22,
   },
   postCard: {
     backgroundColor: 'white',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 15,
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  lastPostCard: {
+    marginBottom: 30,
+  },
+  postHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   postAuthor: {
-    fontWeight: 'bold',
-    marginBottom: 5,
-    color: '#666',
     fontSize: 14,
+    fontWeight: '600',
+    color: '#6b7280',
+  },
+  ratingBadge: {
+    backgroundColor: '#fef3c7',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  ratingBadgeText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#d97706',
   },
   postTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
+    color: '#1f2937',
     marginBottom: 8,
-    color: '#1e40af',
   },
   postContent: {
-    marginBottom: 10,
-    lineHeight: 20,
+    fontSize: 16,
     color: '#4b5563',
+    lineHeight: 22,
+    marginBottom: 16,
   },
   postDetails: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginBottom: 4,
+    backgroundColor: '#f8fafc',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
   },
-  rating: {
+  ratingCount: {
     fontSize: 14,
-    color: '#f59e0b',
-    fontWeight: '600',
-    marginTop: 5,
-  },
-  noPosts: {
-    textAlign: 'center',
-    color: '#6b7280',
-    fontSize: 16,
-    marginTop: 20,
-    fontStyle: 'italic',
+    color: '#9ca3af',
+    textAlign: 'right',
   },
 });
