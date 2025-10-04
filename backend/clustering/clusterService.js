@@ -17,7 +17,6 @@ export const updateAllClusters = async () => {
     // Use our simple clustering logic
     const userClusters = await simpleHierarchicalClustering(users);
 
-    // Save cluster data
     await saveClusters(userClusters);
 
     console.log(
@@ -25,20 +24,18 @@ export const updateAllClusters = async () => {
     );
   } catch (error) {
     console.error("Clustering error:", error);
-    // Fallback to basic grouping if clustering fails
     await fallbackClustering();
   }
 };
 
-// Simple hierarchical clustering implementation
 const simpleHierarchicalClustering = async (users) => {
-  // Step 1: Start with each user as their own cluster
+  // 1: Start with each user as their own cluster
   let clusters = users.map((user) => ({
     users: [user],
     centroid: calculateUserVector(user),
   }));
 
-  // Step 2: Merge closest clusters until we have reasonable groups
+  // 2: Merge closest clusters until we have reasonable groups
   const targetClusterCount = Math.max(
     3,
     Math.min(10, Math.floor(users.length / 5))

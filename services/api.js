@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-// const API_BASE_URL = 'http://localhost:5000/api'; // Change to your backend URL
+// const API_BASE_URL = 'http://localhost:5000/api'; // pang test sa web
 
-const API_BASE_URL = 'http://10.0.2.2:5000/api'; // For Android emulator
+const API_BASE_URL = 'http://10.0.2.2:5000/api'; // para sa android
 
 
 

@@ -32,7 +32,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/clusters", clusterRoutes);
 
-// Schedule clustering updates (daily at 2 AM)
+// Schedule clustering updates 
 cron.schedule(process.env.CLUSTER_UPDATE_SCHEDULE, () => {
   console.log("Running scheduled cluster update...");
   updateAllClusters();

@@ -46,15 +46,12 @@ export default function ClusterDashboard() {
         try {
             console.log('Loading cluster data...');
 
-            // Use the cluster ID that we know exists
             const response = await clustersAPI.getCluster('ncr_students');
             console.log('Cluster data loaded:', response.data);
 
             setUserCluster(response.data);
         } catch (error: any) {
             console.error('Error loading cluster:', error);
-
-            // Create a fallback cluster object with the exact structure from API
             const fallbackCluster: Cluster = {
                 _id: 'fallback',
                 clusterId: 'ncr_students',

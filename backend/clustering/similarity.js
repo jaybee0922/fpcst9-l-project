@@ -107,11 +107,10 @@ const calculateLocationSimilarity = (loc1, loc2) => {
 
   let similarity = 0;
 
-  // Region match (most important)
+  
   if (loc1.region === loc2.region) {
     similarity += 0.6;
   } else {
-    // Check if same island group
     const island1 = getIslandGroup(loc1.region);
     const island2 = getIslandGroup(loc2.region);
     if (island1 === island2) {
@@ -119,7 +118,6 @@ const calculateLocationSimilarity = (loc1, loc2) => {
     }
   }
 
-  // City match
   if (loc1.city === loc2.city) {
     similarity += 0.4;
   }
@@ -209,7 +207,7 @@ export const calculateDistanceMatrix = (users) => {
   for (let i = 0; i < n; i++) {
     for (let j = i + 1; j < n; j++) {
       const similarity = userSimilarity(users[i], users[j]);
-      const distance = 1 - similarity; // Convert similarity to distance
+      const distance = 1 - similarity;
       matrix[i][j] = distance;
       matrix[j][i] = distance;
     }
@@ -242,7 +240,7 @@ export const normalizeFeatures = (features) => {
   features.forEach((featureVector) => {
     const normalizedVector = featureVector.map((value, index) => {
       const range = maxs[index] - mins[index];
-      if (range === 0) return 0.5; // If all values are same, use middle value
+      if (range === 0) return 0.5;
       return (value - mins[index]) / range;
     });
     normalized.push(normalizedVector);

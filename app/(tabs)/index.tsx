@@ -2,7 +2,6 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-// Add this interface for TypeScript
 interface User {
   budget: number;
   location: {
@@ -22,17 +21,14 @@ export default function HomeScreen() {
   const [user, setUser] = useState<User | null>(null);
   const [userCluster, setUserCluster] = useState<any>(null);
 
-  // Load user data when component mounts
   useEffect(() => {
     checkExistingUser();
   }, []);
 
   const checkExistingUser = async () => {
     try {
-      // For demo purposes, we'll always show registration
-      // In a real app, you'd check AsyncStorage or backend for existing user
+      // pang test sa nako
       console.log('Checking for existing user...');
-      // Always show registration for now
     } catch (error) {
       console.log('No existing user found, showing registration');
     }
