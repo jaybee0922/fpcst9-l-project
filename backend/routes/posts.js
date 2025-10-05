@@ -13,6 +13,9 @@ router.post("/", async (req, res) => {
       content,
       budget,
       durationDays,
+      region,
+      userType,
+      householdSize,
       strategies,
       location,
     } = req.body;
@@ -24,6 +27,9 @@ router.post("/", async (req, res) => {
       content,
       budget,
       durationDays,
+      region,
+      userType,
+      householdSize,
       strategies,
       location,
     });

@@ -1,8 +1,17 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+import { Platform } from "react-native"; // ADD THIS IMPORT
 
-// const API_BASE_URL = 'http://localhost:5000/api'; // pang test sa web
-const API_BASE_URL = "http://10.0.2.2:5000/api"; // para sa android
+// Detect platform and use appropriate URL
+const getAPIBaseURL = () => {
+  if (Platform.OS === "android") {
+    return "http://10.0.2.2:5000/api";
+  } else {
+    return "http://localhost:5000/api";
+  }
+};
+
+const API_BASE_URL = getAPIBaseURL(); // USE THE DYNAMIC URL
 
 const api = axios.create({
   baseURL: API_BASE_URL,

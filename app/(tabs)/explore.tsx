@@ -1,6 +1,7 @@
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import PostsList from '../../components/PostsList';
 import { clustersAPI, postsAPI } from '../../services/api';
 
 interface Cluster {
@@ -25,6 +26,7 @@ interface Post {
 
 export default function ExploreScreen() {
   const router = useRouter();
+  const { clusterId: paramClusterId } = useLocalSearchParams<{ clusterId?: string }>();
   const [clusters, setClusters] = useState<Cluster[]>([]);
   const [selectedCluster, setSelectedCluster] = useState<string | null>(null);
   const [clusterPosts, setClusterPosts] = useState<Post[]>([]);
@@ -34,32 +36,49 @@ export default function ExploreScreen() {
     loadClusters();
   }, []);
 
+  // Debug params
+  useEffect(() => {
+    console.log("🔍 Current paramClusterId:", paramClusterId);
+  }, [paramClusterId]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      // Auto-load posts if coming from create-post with clusterId param
+      if (paramClusterId && !selectedCluster) {
+        console.log("🎯 Auto-loading cluster from params:", paramClusterId);
+        loadClusterPosts(paramClusterId as string);
+      } else if (selectedCluster) {
+        loadClusterPosts(selectedCluster);
+      }
+    }, [selectedCluster, paramClusterId])
+  );
+
   const loadClusters = async () => {
     try {
       setLoading(true);
       const response = await clustersAPI.getAllClusters();
-      setClusters(response.data);
+      console.log("Clusters loaded:", response.data);
+      let loadedClusters = response.data;
+      if (loadedClusters.length === 0) {
+        console.log("No clusters from API, using fallback");
+        loadedClusters = [
+          {
+            clusterId: 'ncr_students',
+            name: 'NCR Students',
+            memberCount: 47,
+            demographics: { avgBudget: 3200, commonSituations: ['student'] }
+          }
+        ];
+      }
+      setClusters(loadedClusters);
     } catch (error) {
       console.error('Error loading clusters:', error);
-      // Fallback to demo data if API fails
       setClusters([
         {
           clusterId: 'ncr_students',
           name: 'NCR Students',
           memberCount: 47,
           demographics: { avgBudget: 3200, commonSituations: ['student'] }
-        },
-        {
-          clusterId: 'cebu_professionals',
-          name: 'Cebu Professionals',
-          memberCount: 34,
-          demographics: { avgBudget: 15000, commonSituations: ['professional'] }
-        },
-        {
-          clusterId: 'davao_families',
-          name: 'Davao Families',
-          memberCount: 23,
-          demographics: { avgBudget: 8000, commonSituations: ['family'] }
         }
       ]);
     } finally {
@@ -68,37 +87,36 @@ export default function ExploreScreen() {
   };
 
   const loadClusterPosts = async (clusterId: string) => {
+    console.log("🔄 loadClusterPosts called with:", clusterId);
     try {
       setLoading(true);
       const response = await postsAPI.getClusterPosts(clusterId);
-      setClusterPosts(response.data);
-      setSelectedCluster(clusterId);
+      console.log("✅ Posts loaded:", response.data);
+
+      // Use functional update to ensure state is set correctly
+      setClusterPosts(prev => {
+        console.log("🔄 Setting clusterPosts to:", response.data);
+        return response.data;
+      });
+
+      setSelectedCluster(prev => {
+        console.log("🔄 Setting selectedCluster to:", clusterId);
+        return clusterId;
+      });
+
     } catch (error) {
       console.error('Error loading posts:', error);
-      // Fallback to demo posts if API fails
       setClusterPosts([
         {
           _id: '1',
           anonymousAuthorId: 'User #247',
           title: 'Carenderia Strategy',
-          content: 'I save by eating at carenderia near my school. I spend ₱50 per meal instead of ₱100+ in restaurants.',
+          content: 'I save by eating at carenderia near my school.',
           budget: 3000,
           durationDays: 14,
           strategies: ['carenderia'],
           avgRating: 4.8,
           ratingCount: 12,
-          createdAt: new Date().toISOString()
-        },
-        {
-          _id: '2',
-          anonymousAuthorId: 'User #156',
-          title: 'Walking to School',
-          content: 'I walk 20 minutes to school instead of taking jeepney. Saves me ₱40 daily!',
-          budget: 2800,
-          durationDays: 12,
-          strategies: ['walking'],
-          avgRating: 4.5,
-          ratingCount: 8,
           createdAt: new Date().toISOString()
         }
       ]);
@@ -111,6 +129,7 @@ export default function ExploreScreen() {
   const handleBack = () => {
     if (selectedCluster) {
       setSelectedCluster(null);
+      setClusterPosts([]);
     } else {
       router.back();
     }
@@ -130,7 +149,6 @@ export default function ExploreScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Header with Back Button */}
         <View style={styles.header}>
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
             <Text style={styles.backButtonText}>←</Text>
@@ -154,11 +172,11 @@ export default function ExploreScreen() {
             {clusters.map((cluster, index) => (
               <TouchableOpacity
                 key={cluster.clusterId}
-                style={[
-                  styles.clusterCard,
-                  index === clusters.length - 1 && styles.lastClusterCard
-                ]}
-                onPress={() => loadClusterPosts(cluster.clusterId)}
+                style={styles.clusterCard}
+                onPress={() => {
+                  console.log("🎯 Cluster clicked:", cluster.clusterId);
+                  loadClusterPosts(cluster.clusterId);
+                }}
               >
                 <View style={styles.clusterHeader}>
                   <Text style={styles.clusterName}>{cluster.name}</Text>
@@ -166,20 +184,12 @@ export default function ExploreScreen() {
                     <Text style={styles.memberBadgeText}>{cluster.memberCount} members</Text>
                   </View>
                 </View>
-
                 <View style={styles.clusterDetails}>
                   <View style={styles.detailItem}>
                     <Text style={styles.detailLabel}>Avg Budget:</Text>
                     <Text style={styles.detailValue}>₱{cluster.demographics.avgBudget.toLocaleString()}</Text>
                   </View>
-                  <View style={styles.detailItem}>
-                    <Text style={styles.detailLabel}>Common Situations:</Text>
-                    <Text style={styles.detailValue}>
-                      {cluster.demographics.commonSituations.join(', ')}
-                    </Text>
-                  </View>
                 </View>
-
                 <View style={styles.exploreButton}>
                   <Text style={styles.exploreButtonText}>View Community →</Text>
                 </View>
@@ -187,64 +197,20 @@ export default function ExploreScreen() {
             ))}
           </ScrollView>
         ) : (
-          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          <View style={styles.postsContainer}>
             <Text style={styles.sectionSubtitle}>
               Real strategies from community members
             </Text>
 
-            {loading ? (
-              <View style={styles.postsLoading}>
-                <ActivityIndicator size="large" color="#1e40af" />
-                <Text style={styles.loadingText}>Loading posts...</Text>
-              </View>
-            ) : clusterPosts.length === 0 ? (
-              <View style={styles.noPosts}>
-                <Text style={styles.noPostsTitle}>No posts yet</Text>
-                <Text style={styles.noPostsText}>
-                  Be the first to share your money-saving strategy in this community!
-                </Text>
-              </View>
-            ) : (
-              clusterPosts.map((post, index) => (
-                <View
-                  key={post._id}
-                  style={[
-                    styles.postCard,
-                    index === clusterPosts.length - 1 && styles.lastPostCard
-                  ]}
-                >
-                  <View style={styles.postHeader}>
-                    <Text style={styles.postAuthor}>{post.anonymousAuthorId}</Text>
-                    <View style={styles.ratingBadge}>
-                      <Text style={styles.ratingBadgeText}>⭐ {post.avgRating}</Text>
-                    </View>
-                  </View>
+            {/* Debug Info */}
+            <View style={styles.debugContainer}>
+              <Text style={styles.debugText}>
+                Debug: {clusterPosts.length} posts | Cluster: {selectedCluster} | Loading: {loading.toString()}
+              </Text>
+            </View>
 
-                  <Text style={styles.postTitle}>{post.title}</Text>
-                  <Text style={styles.postContent}>{post.content}</Text>
-
-                  <View style={styles.postDetails}>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Budget: </Text>
-                      <Text style={styles.detailValue}>₱{post.budget.toLocaleString()}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Duration: </Text>
-                      <Text style={styles.detailValue}>{post.durationDays} days</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Strategies: </Text>
-                      <Text style={styles.detailValue}>
-                        {post.strategies.map(strategy => strategy.replace('_', ' ')).join(', ')}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <Text style={styles.ratingCount}>({post.ratingCount} ratings)</Text>
-                </View>
-              ))
-            )}
-          </ScrollView>
+            <PostsList posts={clusterPosts} loading={loading} />
+          </View>
         )}
       </View>
     </SafeAreaView>
@@ -259,6 +225,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 20,
+  },
+  postsContainer: {
+    flex: 1,
   },
   loadingContainer: {
     flex: 1,
@@ -326,9 +295,6 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: '#1e40af',
   },
-  lastClusterCard: {
-    marginBottom: 30,
-  },
   clusterHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -358,11 +324,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginBottom: 6,
   },
-  detailRow: {
-    flexDirection: 'row',
-    marginBottom: 4,
-    flexWrap: 'wrap',
-  },
   detailLabel: {
     fontSize: 14,
     fontWeight: '600',
@@ -372,7 +333,6 @@ const styles = StyleSheet.create({
   detailValue: {
     fontSize: 14,
     color: '#6b7280',
-    flex: 1,
   },
   exploreButton: {
     alignItems: 'center',
@@ -385,84 +345,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1e40af',
   },
-  postsLoading: {
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  noPosts: {
-    alignItems: 'center',
-    paddingVertical: 40,
-    paddingHorizontal: 20,
-  },
-  noPostsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#6b7280',
-    marginBottom: 8,
-  },
-  noPostsText: {
-    fontSize: 16,
-    color: '#9ca3af',
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  postCard: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  lastPostCard: {
-    marginBottom: 30,
-  },
-  postHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  postAuthor: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6b7280',
-  },
-  ratingBadge: {
+  debugContainer: {
     backgroundColor: '#fef3c7',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  ratingBadgeText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#d97706',
-  },
-  postTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 8,
-  },
-  postContent: {
-    fontSize: 16,
-    color: '#4b5563',
-    lineHeight: 22,
-    marginBottom: 16,
-  },
-  postDetails: {
-    backgroundColor: '#f8fafc',
-    padding: 12,
+    padding: 10,
     borderRadius: 8,
-    marginBottom: 12,
+    marginBottom: 10,
   },
-  ratingCount: {
-    fontSize: 14,
-    color: '#9ca3af',
-    textAlign: 'right',
+  debugText: {
+    fontSize: 12,
+    color: '#92400e',
+    textAlign: 'center',
   },
 });

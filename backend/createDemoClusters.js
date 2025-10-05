@@ -12,25 +12,7 @@ const demoClusters = [
     demographics: {
       avgBudget: 3200,
       commonSituations: ["student"],
-    },
-    statistics: {
-      avgTrustScore: 75,
-      avgPostRating: 4.2,
-      activeMemberCount: 35,
-    },
-  },
-  {
-    clusterId: "davao_families",
-    name: "Davao Families",
-    memberCount: 23,
-    demographics: {
-      avgBudget: 8000,
-      commonSituations: ["family"],
-    },
-    statistics: {
-      avgTrustScore: 82,
-      avgPostRating: 4.5,
-      activeMemberCount: 18,
+      commonLocations: ["Manila", "Quezon City", "Makati"],
     },
   },
   {
@@ -40,11 +22,17 @@ const demoClusters = [
     demographics: {
       avgBudget: 15000,
       commonSituations: ["professional"],
+      commonLocations: ["Cebu City", "Mandaue", "Lapu-Lapu"],
     },
-    statistics: {
-      avgTrustScore: 88,
-      avgPostRating: 4.3,
-      activeMemberCount: 28,
+  },
+  {
+    clusterId: "davao_families",
+    name: "Davao Families",
+    memberCount: 23,
+    demographics: {
+      avgBudget: 8000,
+      commonSituations: ["family"],
+      commonLocations: ["Davao City", "Tagum", "Digos"],
     },
   },
 ];
@@ -60,14 +48,11 @@ async function createDemoClusters() {
 
     // Create demo clusters
     await Cluster.insertMany(demoClusters);
-    console.log("Demo clusters created successfully!");
+    console.log("Demo clusters created successfully");
 
-    // List created clusters
+    // Verify
     const clusters = await Cluster.find();
-    console.log("\nCreated clusters:");
-    clusters.forEach((cluster) => {
-      console.log(`- ${cluster.name} (${cluster.memberCount} members)`);
-    });
+    console.log("Current clusters in database:", clusters);
 
     process.exit(0);
   } catch (error) {

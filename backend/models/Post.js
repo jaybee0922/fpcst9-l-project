@@ -1,13 +1,16 @@
 import mongoose from "mongoose";
 
 const postSchema = new mongoose.Schema({
-  anonymousAuthorId: String, 
-  clusterId: String, 
+  anonymousAuthorId: String,
+  clusterId: String,
   title: String,
   content: String,
   budget: Number,
-  durationDays: Number, 
-  strategies: [String], 
+  durationDays: Number,
+  region: String,
+  userType: String,
+  householdSize: Number,
+  strategies: [String],
   location: {
     region: String,
     city: String,
@@ -15,13 +18,13 @@ const postSchema = new mongoose.Schema({
   ratings: [
     {
       userId: String,
-      rating: Number, 
+      rating: Number,
       createdAt: { type: Date, default: Date.now },
     },
   ],
   avgRating: { type: Number, default: 0 },
   ratingCount: { type: Number, default: 0 },
-  contentClusterId: String, 
+  contentClusterId: String,
   createdAt: { type: Date, default: Date.now },
 });
 

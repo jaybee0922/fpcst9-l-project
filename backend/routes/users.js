@@ -5,6 +5,7 @@ import User from "../models/User.js";
 const router = express.Router();
 
 // Register new user
+// Register new user
 router.post("/register", async (req, res) => {
   try {
     console.log("=== REGISTRATION REQUEST ===");
@@ -20,15 +21,19 @@ router.post("/register", async (req, res) => {
         .json({ error: "User already exists with this email" });
     }
 
-    // Create user with only email and password
+    // Create user with email, password, and default cluster
     const newUser = new User({
       email,
       password,
-      // All other fields will use their default values from the model
+      clusterId: "ncr_students", // Assign to default cluster
     });
 
     await newUser.save();
-    console.log("User saved successfully:", newUser.email);
+    console.log("User saved successfully:", {
+      email: newUser.email,
+      clusterId: newUser.clusterId,
+      anonymousId: newUser.anonymousId,
+    });
 
     // Generate token
     const token = generateToken(newUser._id);
@@ -40,7 +45,7 @@ router.post("/register", async (req, res) => {
       location: newUser.location, // Will be empty/default
       demographics: newUser.demographics, // Will be empty/default
       budget: newUser.budget, // Will be 0/default
-      clusterId: newUser.clusterId,
+      clusterId: newUser.clusterId, // Now has a cluster ID!
       trustScore: newUser.trustScore,
       token,
     };
