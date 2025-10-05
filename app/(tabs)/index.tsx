@@ -42,6 +42,11 @@ export default function HomeScreen() {
     router.push('/(tabs)/explore');
   };
 
+  // NEW: Navigate to create post
+  const navigateToCreatePost = () => {
+    router.push('/create-post');
+  };
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Money Cluster</Text>
@@ -55,8 +60,8 @@ export default function HomeScreen() {
             Join our community of Filipinos sharing proven money-saving strategies specific to your location and situation.
           </Text>
 
-          <TouchableOpacity style={styles.primaryButton} onPress={navigateToRegister}>
-            <Text style={styles.primaryButtonText}>Create Your Profile</Text>
+          <TouchableOpacity style={styles.primaryButton} onPress={navigateToCreatePost}>
+            <Text style={styles.primaryButtonText}>Share your tips</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.secondaryButton} onPress={navigateToExplore}>
@@ -73,7 +78,7 @@ export default function HomeScreen() {
           <Text>Location: {user.location.city}, {user.location.region}</Text>
           <Text>Situation: {user.demographics.situation}</Text>
 
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={styles.actionButton} onPress={navigateToCreatePost}>
             <Text style={styles.actionButtonText}>Share Your Strategy</Text>
           </TouchableOpacity>
         </View>
@@ -126,6 +131,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: '#f5f5f5',
+    marginTop: 50,
   },
   title: {
     fontSize: 28,

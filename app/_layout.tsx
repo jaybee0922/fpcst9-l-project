@@ -21,8 +21,7 @@ export default function RootLayout() {
 
   const checkAuthStatus = async () => {
     try {
-      // For now, we'll always show Welcome screen
-      // Later we can check AsyncStorage for auth token
+      // for token later
       setIsLoggedIn(false);
     } catch (error) {
       console.error('Auth check error:', error);

@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+    ActivityIndicator,
+    Alert,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -10,25 +12,52 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import { authHelper, userAPI } from '../services/api';
 
 export default function WelcomeScreen() {
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
 
     const handleLogin = async () => {
-        // to be replaced with real auth later
         try {
-            console.log('Login attempted:', { email, password });
+            // Simple validation
             if (!email || !password) {
-                alert('Please enter both email and password');
+                Alert.alert('Error', 'Please enter both email and password');
                 return;
             }
 
+            if (!email.includes('@')) {
+                Alert.alert('Error', 'Please enter a valid email address');
+                return;
+            }
+
+            setLoading(true);
+
+            // Call login API
+            const response = await userAPI.login({ email, password });
+
+            // Store token and user data
+            await authHelper.storeToken(response.data.token);
+            await authHelper.storeUserData(response.data);
+
+            Alert.alert('Success', 'Login successful!');
+
+            // Navigate to main app
             router.replace('/(tabs)');
-        } catch (error) {
+        } catch (error: any) {
             console.error('Login error:', error);
-            alert('Login failed. Please try again.');
+
+            if (error.response?.data?.error) {
+                Alert.alert('Login Failed', error.response.data.error);
+            } else if (error.code === 'NETWORK_ERROR') {
+                Alert.alert('Network Error', 'Cannot connect to server. Make sure backend is running.');
+            } else {
+                Alert.alert('Login Failed', 'An error occurred. Please try again.');
+            }
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -36,13 +65,8 @@ export default function WelcomeScreen() {
         router.push('/register');
     };
 
-    // const handleExplore = () => {
-    //     // router.push('/(tabs)/explore');
-    // };
-
     const handleExplore = () => {
-        router.push('/explore');
-        // router.push('/(tabs)/explore');
+        router.push('/(tabs)/explore');
     };
 
     return (
@@ -68,6 +92,7 @@ export default function WelcomeScreen() {
                         onChangeText={setEmail}
                         keyboardType="email-address"
                         autoCapitalize="none"
+                        autoComplete="email"
                     />
 
                     <TextInput
@@ -76,13 +101,26 @@ export default function WelcomeScreen() {
                         value={password}
                         onChangeText={setPassword}
                         secureTextEntry
+                        autoComplete="password"
                     />
 
-                    <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-                        <Text style={styles.loginButtonText}>Login</Text>
+                    <TouchableOpacity
+                        style={[styles.loginButton, loading && styles.disabledButton]}
+                        onPress={handleLogin}
+                        disabled={loading}
+                    >
+                        {loading ? (
+                            <ActivityIndicator color="white" />
+                        ) : (
+                            <Text style={styles.loginButtonText}>Login</Text>
+                        )}
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.signUpButton} onPress={handleSignUp}>
+                    <TouchableOpacity
+                        style={styles.signUpButton}
+                        onPress={handleSignUp}
+                        disabled={loading}
+                    >
                         <Text style={styles.signUpButtonText}>Create New Account</Text>
                     </TouchableOpacity>
                 </View>
@@ -106,7 +144,11 @@ export default function WelcomeScreen() {
                         <Text style={styles.stepText}>Discover proven tips from your cluster</Text>
                     </View>
 
-                    <TouchableOpacity style={styles.exploreButton} onPress={handleExplore}>
+                    <TouchableOpacity
+                        style={styles.exploreButton}
+                        onPress={handleExplore}
+                        disabled={loading}
+                    >
                         <Text style={styles.exploreButtonText}>Explore Community First</Text>
                     </TouchableOpacity>
                 </View>
@@ -173,6 +215,9 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         alignItems: 'center',
         marginBottom: 12,
+    },
+    disabledButton: {
+        backgroundColor: '#9ca3af',
     },
     loginButtonText: {
         color: 'white',

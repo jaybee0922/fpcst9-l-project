@@ -1,31 +1,102 @@
 import express from "express";
+import { authMiddleware, generateToken } from "../middleware/auth.js";
 import User from "../models/User.js";
 
 const router = express.Router();
 
-// Create new user
+// Register new user
 router.post("/register", async (req, res) => {
   try {
-    const { location, demographics, budget, spendingPriorities, strategies } =
-      req.body;
+    console.log("=== REGISTRATION REQUEST ===");
+    console.log("Body received:", req.body);
 
-    // Generate anonymous ID
-    const userCount = await User.countDocuments();
-    const anonymousId = `User #${userCount + 1}`;
+    const { email, password } = req.body; // Only get email and password
 
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res
+        .status(400)
+        .json({ error: "User already exists with this email" });
+    }
+
+    // Create user with only email and password
     const newUser = new User({
-      anonymousId,
-      location,
-      demographics,
-      budget,
-      spendingPriorities,
-      strategies,
+      email,
+      password,
+      // All other fields will use their default values from the model
     });
 
     await newUser.save();
-    res.status(201).json(newUser);
+    console.log("User saved successfully:", newUser.email);
+
+    // Generate token
+    const token = generateToken(newUser._id);
+
+    const userResponse = {
+      _id: newUser._id,
+      anonymousId: newUser.anonymousId,
+      email: newUser.email,
+      location: newUser.location, // Will be empty/default
+      demographics: newUser.demographics, // Will be empty/default
+      budget: newUser.budget, // Will be 0/default
+      clusterId: newUser.clusterId,
+      trustScore: newUser.trustScore,
+      token,
+    };
+
+    res.status(201).json(userResponse);
   } catch (error) {
+    console.error("REGISTRATION ERROR:", error);
     res.status(400).json({ error: error.message });
+  }
+});
+
+// Login user
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Find user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ error: "Invalid email or password" });
+    }
+
+    // Check password
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(400).json({ error: "Invalid email or password" });
+    }
+
+    // Generate token
+    const token = generateToken(user._id);
+
+    // Return user data without password
+    const userResponse = {
+      _id: user._id,
+      anonymousId: user.anonymousId,
+      email: user.email,
+      location: user.location,
+      demographics: user.demographics,
+      budget: user.budget,
+      clusterId: user.clusterId,
+      trustScore: user.trustScore,
+      token,
+    };
+
+    res.json(userResponse);
+  } catch (error) {
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Get current user profile (protected route)
+router.get("/profile", authMiddleware, async (req, res) => {
+  try {
+    res.json(req.user);
+  } catch (error) {
+    res.status(500).json({ error: "Server error" });
   }
 });
 
