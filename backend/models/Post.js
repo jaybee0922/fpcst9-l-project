@@ -28,7 +28,6 @@ const postSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-// Update average rating when new rating is added
 postSchema.methods.updateRating = function () {
   if (this.ratings.length === 0) {
     this.avgRating = 0;

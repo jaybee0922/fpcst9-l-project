@@ -24,7 +24,6 @@ export default function CreatePostScreen() {
         try {
             setLoading(true);
 
-            // Get user data from storage
             const userData = await authHelper.getUserData();
 
             if (!userData) {
@@ -35,7 +34,7 @@ export default function CreatePostScreen() {
 
             const postData = {
                 anonymousAuthorId: userData.anonymousId || 'User #1',
-                clusterId: userData.clusterId || 'ncr_students', // Use actual cluster
+                clusterId: userData.clusterId || 'ncr_students',
                 title: formData.title,
                 content: formData.content,
                 budget: parseInt(formData.budget) || 0,
@@ -55,10 +54,9 @@ export default function CreatePostScreen() {
                 {
                     text: 'View Posts',
                     onPress: () => {
-                        // Navigate and force refresh
                         router.push({
                             pathname: '/(tabs)/explore',
-                            params: { refresh: Date.now() } // Add timestamp to force refresh
+                            params: { refresh: Date.now() } 
                         });
                     }
                 },

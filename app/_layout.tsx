@@ -6,6 +6,7 @@ import { ActivityIndicator, View } from 'react-native';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { authHelper, userAPI } from '@/services/api';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -21,8 +22,29 @@ export default function RootLayout() {
 
   const checkAuthStatus = async () => {
     try {
-      // for token later
-      setIsLoggedIn(false);
+      // Check for stored token
+      const token = await authHelper.getToken();
+      if (!token) {
+        setIsLoggedIn(false);
+        return;
+      }
+
+      // Validate token by fetching profile (optional but recommended for security)
+      try {
+        await userAPI.getProfile(); // This will use the interceptor to add token
+        // If successful, user is authenticated
+        const userData = await authHelper.getUserData();
+        if (userData) {
+          setIsLoggedIn(true);
+        } else {
+          setIsLoggedIn(false);
+        }
+      } catch (apiError) {
+        console.error('Token invalid, clearing storage:', apiError);
+        await authHelper.removeToken();
+        await authHelper.removeUserData();
+        setIsLoggedIn(false);
+      }
     } catch (error) {
       console.error('Auth check error:', error);
       setIsLoggedIn(false);
@@ -38,27 +60,17 @@ export default function RootLayout() {
     );
   }
 
+  const initialRoute = isLoggedIn ? '(tabs)' : 'Welcome';
+
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        {/* Show Welcome screen if not logged in */}
-        {!isLoggedIn && (
-          <Stack.Screen
-            name="Welcome"
-            options={{ headerShown: false }}
-          />
-        )}
-        {/* Show tabs if logged in */}
-        {isLoggedIn && (
-          <>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-          </>
-        )}
-        {/* Always allow access to register */}
+      <Stack initialRouteName={initialRoute}>
+        <Stack.Screen name="Welcome" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="register" options={{ headerShown: false }} />
         <Stack.Screen name="cluster-dashboard" options={{ headerShown: false }} />
         <Stack.Screen name="create-post" options={{ headerShown: false }} />
+        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

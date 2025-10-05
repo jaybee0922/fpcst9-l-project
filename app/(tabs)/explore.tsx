@@ -19,6 +19,9 @@ interface Post {
   budget: number;
   durationDays: number;
   strategies: string[];
+  region: string;
+  userType: string;
+  householdSize: number;
   avgRating: number;
   ratingCount: number;
   createdAt: string;
@@ -93,10 +96,13 @@ export default function ExploreScreen() {
       const response = await postsAPI.getClusterPosts(clusterId);
       console.log("✅ Posts loaded:", response.data);
 
+      // Sort posts by createdAt ascending (oldest first, newest last)
+      const sortedPosts = response.data.sort((a: Post, b: Post) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
       // Use functional update to ensure state is set correctly
       setClusterPosts(prev => {
-        console.log("🔄 Setting clusterPosts to:", response.data);
-        return response.data;
+        console.log("🔄 Setting clusterPosts to:", sortedPosts);
+        return sortedPosts;
       });
 
       setSelectedCluster(prev => {
@@ -115,6 +121,9 @@ export default function ExploreScreen() {
           budget: 3000,
           durationDays: 14,
           strategies: ['carenderia'],
+          region: 'N/A',
+          userType: 'N/A',
+          householdSize: 1,
           avgRating: 4.8,
           ratingCount: 12,
           createdAt: new Date().toISOString()
@@ -357,3 +366,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+

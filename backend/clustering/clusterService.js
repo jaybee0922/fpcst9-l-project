@@ -1,12 +1,10 @@
 import Cluster from "../models/Cluster.js";
 import User from "../models/User.js";
 
-// Simple hierarchical clustering implementation
 export const updateAllClusters = async () => {
   try {
     console.log("Starting hierarchical clustering...");
 
-    // Get all users with their data
     const users = await User.find();
 
     if (users.length < 5) {
@@ -14,7 +12,6 @@ export const updateAllClusters = async () => {
       return;
     }
 
-    // Use our simple clustering logic
     const userClusters = await simpleHierarchicalClustering(users);
 
     await saveClusters(userClusters);
@@ -29,20 +26,17 @@ export const updateAllClusters = async () => {
 };
 
 const simpleHierarchicalClustering = async (users) => {
-  // 1: Start with each user as their own cluster
   let clusters = users.map((user) => ({
     users: [user],
     centroid: calculateUserVector(user),
   }));
 
-  // 2: Merge closest clusters until we have reasonable groups
   const targetClusterCount = Math.max(
     3,
     Math.min(10, Math.floor(users.length / 5))
   );
 
   while (clusters.length > targetClusterCount) {
-    // Find two closest clusters
     let minDistance = Infinity;
     let clusterA = null;
     let clusterB = null;
@@ -58,7 +52,6 @@ const simpleHierarchicalClustering = async (users) => {
       }
     }
 
-    // Merge the two closest clusters
     if (clusterA !== null && clusterB !== null) {
       const mergedUsers = [
         ...clusters[clusterA].users,
@@ -74,7 +67,6 @@ const simpleHierarchicalClustering = async (users) => {
     }
   }
 
-  // Convert to our cluster format
   return clusters.map((cluster, index) => ({
     clusterId: `cluster_${index + 1}`,
     name: generateClusterName(cluster.users),
@@ -84,7 +76,6 @@ const simpleHierarchicalClustering = async (users) => {
   }));
 };
 
-// Calculate feature vector for a user
 const calculateUserVector = (user) => {
   return [
     user.budget || 3000,
@@ -96,7 +87,6 @@ const calculateUserVector = (user) => {
   ];
 };
 
-// Calculate centroid (average) of multiple users
 const calculateCentroid = (users) => {
   if (users.length === 0) return [];
 
@@ -111,9 +101,7 @@ const calculateCentroid = (users) => {
   return centroid;
 };
 
-// Calculate distance between two clusters
 const calculateClusterDistance = (clusterA, clusterB) => {
-  // Simple Euclidean distance between centroids
   let sum = 0;
   for (let i = 0; i < clusterA.centroid.length; i++) {
     sum += Math.pow(clusterA.centroid[i] - clusterB.centroid[i], 2);
@@ -121,7 +109,6 @@ const calculateClusterDistance = (clusterA, clusterB) => {
   return Math.sqrt(sum);
 };
 
-// Helper functions (keep these from before)
 const locationToCode = (region) => {
   const regions = [
     "NCR",

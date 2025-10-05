@@ -22,7 +22,7 @@ export default function RegisterScreen() {
             }, 1000);
             return () => clearTimeout(timer);
         } else if (success && countdown === 0) {
-            router.replace('/Welcome');
+            router.replace('/(tabs)');
         }
     }, [success, countdown]);
 
@@ -59,18 +59,16 @@ export default function RegisterScreen() {
             const userData = {
                 email: formData.email,
                 password: formData.password,
-                // No profile data - user will add it later
+
             };
 
             console.log("Sending registration data:", userData);
 
             const response = await userAPI.register(userData);
 
-            // Store token and user data
             await authHelper.storeToken(response.data.token);
             await authHelper.storeUserData(response.data);
 
-            // Show success state and start countdown
             setSuccess(true);
             setCountdown(3);
 
@@ -177,7 +175,7 @@ export default function RegisterScreen() {
 
             <TouchableOpacity
                 style={styles.loginLink}
-                onPress={() => router.back()}
+                onPress={() => router.replace('/Welcome')}
             >
                 <Text style={styles.loginLinkText}>
                     Already have an account? <Text style={styles.loginLinkBold}>Login</Text>
@@ -192,7 +190,7 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 20,
         backgroundColor: '#f5f5f5',
-        marginTop: 100,  
+        marginTop: 100,
     },
     successContainer: {
         flex: 1,

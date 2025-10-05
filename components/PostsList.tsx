@@ -9,6 +9,9 @@ interface Post {
   budget: number;
   durationDays: number;
   strategies: string[];
+  region: string;
+  userType: string;
+  householdSize: number;
   avgRating: number;
   ratingCount: number;
   createdAt: string;
@@ -18,12 +21,12 @@ interface PostsListProps {
   posts: Post[];
   loading: boolean;
 }
-    
+
 
 
 export default function PostsList({ posts, loading }: PostsListProps) {
 
-    
+
 
   if (loading) {
     return (
@@ -78,6 +81,18 @@ export default function PostsList({ posts, loading }: PostsListProps) {
               <Text style={styles.detailValue}>
                 {post.strategies?.map(strategy => strategy.replace('_', ' ')).join(', ') || 'None'}
               </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Region: </Text>
+              <Text style={styles.detailValue}>{post.region || 'N/A'}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Type: </Text>
+              <Text style={styles.detailValue}>{post.userType || 'N/A'}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Household: </Text>
+              <Text style={styles.detailValue}>{post.householdSize || 1} people</Text>
             </View>
           </View>
 

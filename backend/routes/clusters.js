@@ -5,7 +5,6 @@ import User from "../models/User.js";
 
 const router = express.Router();
 
-// Get all clusters
 router.get("/", async (req, res) => {
   try {
     const clusters = await Cluster.find().sort({ memberCount: -1 });
@@ -15,7 +14,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Get specific cluster by ID
 router.get("/:clusterId", async (req, res) => {
   try {
     const cluster = await Cluster.findOne({ clusterId: req.params.clusterId });
@@ -24,17 +22,14 @@ router.get("/:clusterId", async (req, res) => {
       return res.status(404).json({ error: "Cluster not found" });
     }
 
-    // Get recent posts from this cluster
     const recentPosts = await Post.find({ clusterId: req.params.clusterId })
       .sort({ createdAt: -1 })
       .limit(10);
 
-    // Get cluster members (limited for performance)
     const clusterMembers = await User.find({ clusterId: req.params.clusterId })
       .select("anonymousId demographics location budget")
       .limit(20);
 
-    // Calculate cluster statistics
     const clusterStats = await calculateClusterStats(req.params.clusterId);
 
     res.json({
@@ -48,7 +43,6 @@ router.get("/:clusterId", async (req, res) => {
   }
 });
 
-// Get cluster recommendations for a user
 router.get("/recommendations/:userId", async (req, res) => {
   try {
     const user = await User.findById(req.params.userId);
@@ -57,14 +51,12 @@ router.get("/recommendations/:userId", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Find user's cluster
     const userCluster = await Cluster.findOne({ clusterId: user.clusterId });
 
     if (!userCluster) {
       return res.status(404).json({ error: "User cluster not found" });
     }
 
-    // Find similar clusters (clusters with similar demographics)
     const similarClusters = await Cluster.find({
       clusterId: { $ne: user.clusterId },
       "demographics.commonSituations": {
@@ -72,7 +64,6 @@ router.get("/recommendations/:userId", async (req, res) => {
       },
     }).limit(3);
 
-    // Get top-rated posts from user's cluster
     const topClusterPosts = await Post.find({ clusterId: user.clusterId })
       .sort({ avgRating: -1 })
       .limit(5);
@@ -87,7 +78,7 @@ router.get("/recommendations/:userId", async (req, res) => {
   }
 });
 
-// Get cluster insights and statistics
+
 router.get("/:clusterId/insights", async (req, res) => {
   try {
     const clusterId = req.params.clusterId;
@@ -99,10 +90,10 @@ router.get("/:clusterId/insights", async (req, res) => {
   }
 });
 
-// Manually trigger cluster update (admin endpoint)
+
 router.post("/update-clusters", async (req, res) => {
   try {
-    // Import the clustering service
+
     const { updateAllClusters } = await import(
       "../clustering/clusterService.js"
     );
@@ -114,8 +105,7 @@ router.post("/update-clusters", async (req, res) => {
   }
 });
 
-// Helper function to calculate cluster statistics
-// Add this missing helper function
+
 const calculateClusterStats = async (clusterId) => {
   try {
     const users = await User.find({ clusterId });
@@ -131,11 +121,9 @@ const calculateClusterStats = async (clusterId) => {
       };
     }
 
-    // Calculate average budget
     const avgBudget =
       users.reduce((sum, user) => sum + (user.budget || 0), 0) / users.length;
 
-    // Calculate average post rating
     const avgPostRating =
       posts.length > 0
         ? posts.reduce((sum, post) => sum + (post.avgRating || 0), 0) /
@@ -144,10 +132,10 @@ const calculateClusterStats = async (clusterId) => {
 
     return {
       avgBudget: Math.round(avgBudget),
-      avgDuration: 12.3, // Default value for demo
+      avgDuration: 12.3, 
       totalPosts: posts.length,
       avgPostRating: Math.round(avgPostRating * 10) / 10,
-      activeMembers: users.length, // Simplified for now
+      activeMembers: users.length, 
     };
   } catch (error) {
     console.error("Error calculating cluster stats:", error);
@@ -161,12 +149,12 @@ const calculateClusterStats = async (clusterId) => {
   }
 };
 
-// Helper function to calculate detailed cluster insights
+
 const calculateClusterInsights = async (clusterId) => {
   const users = await User.find({ clusterId });
   const posts = await Post.find({ clusterId });
 
-  // Most common strategies in this cluster
+
   const strategyCounts = {};
   users.forEach((user) => {
     user.strategies?.forEach((strategy) => {
@@ -183,14 +171,14 @@ const calculateClusterInsights = async (clusterId) => {
       percentage: Math.round((count / users.length) * 100),
     }));
 
-  // Most common locations
+
   const locationCounts = {};
   users.forEach((user) => {
     const location = user.location?.region || "Unknown";
     locationCounts[location] = (locationCounts[location] || 0) + 1;
   });
 
-  // Budget distribution
+
   const budgets = users
     .map((user) => user.budget || 0)
     .filter((budget) => budget > 0);

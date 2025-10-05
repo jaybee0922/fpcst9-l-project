@@ -86,7 +86,6 @@ import { clustersAPI } from '../services/api';
 
                 setUserCluster(fallbackCluster);
 
-                // Show helpful error message
                 if (error.response?.status === 404) {
                     Alert.alert(
                         'Cluster Not Found',

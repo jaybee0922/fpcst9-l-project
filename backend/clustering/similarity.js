@@ -162,12 +162,10 @@ const calculateDemographicSimilarity = (demo1, demo2) => {
 
   let similarity = 0;
 
-  // Situation match (student, professional, family, etc.)
   if (demo1.situation === demo2.situation) {
     similarity += 0.6;
   }
 
-  // Family size similarity (normalized difference)
   const size1 = demo1.familySize || 1;
   const size2 = demo2.familySize || 1;
   const sizeDiff = Math.abs(size1 - size2);
@@ -225,7 +223,6 @@ export const normalizeFeatures = (features) => {
   const numFeatures = features[0].length;
   const normalized = [];
 
-  // Calculate min and max for each feature
   const mins = Array(numFeatures).fill(Infinity);
   const maxs = Array(numFeatures).fill(-Infinity);
 
@@ -236,7 +233,6 @@ export const normalizeFeatures = (features) => {
     });
   });
 
-  // Normalize each feature vector
   features.forEach((featureVector) => {
     const normalizedVector = featureVector.map((value, index) => {
       const range = maxs[index] - mins[index];
