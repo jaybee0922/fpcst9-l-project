@@ -84,9 +84,13 @@ export default function CreatePostScreen() {
                 {
                     text: 'View Posts',
                     onPress: () => {
+                        // Navigate to a dedicated posts page instead of explore
                         router.push({
-                            pathname: '/(tabs)/explore',
-                            params: { refresh: Date.now() }
+                            pathname: '/posts',
+                            params: { 
+                                clusterId: userData.clusterId || 'ncr_students',
+                                refresh: Date.now() 
+                            }
                         });
                     }
                 },

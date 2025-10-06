@@ -73,10 +73,13 @@ export default function HomeScreen() {
   const navigateToExplore = () => {
     router.push('/(tabs)/explore');
   };
-
   // NEW: Navigate to create post
   const navigateToCreatePost = () => {
     router.push('/create-post');
+
+
+
+
   };
 
   if (loading) {
@@ -133,6 +136,7 @@ export default function HomeScreen() {
             <TouchableOpacity style={styles.actionButton} onPress={navigateToCreatePost}>
               <Text style={styles.actionButtonText}>Share Your Strategy</Text>
             </TouchableOpacity>
+
           </View>
         )}
 
@@ -208,8 +212,8 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   logoutIcon: {
-    width: 30 ,
-    height: 30  ,
+    width: 30,
+    height: 30,
     borderColor: '#000000',
     borderWidth: 1,
     borderRadius: 50
