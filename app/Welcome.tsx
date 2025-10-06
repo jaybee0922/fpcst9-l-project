@@ -144,13 +144,13 @@ export default function WelcomeScreen() {
                         <Text style={styles.stepText}>Discover proven tips from your cluster</Text>
                     </View>
 
-                    <TouchableOpacity
+                    {/* <TouchableOpacity
                         style={styles.exploreButton}
                         onPress={handleExplore}
                         disabled={loading}
                     >
                         <Text style={styles.exploreButtonText}>Explore Community First</Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </View>
             </ScrollView>
         </KeyboardAvoidingView>
@@ -273,16 +273,16 @@ const styles = StyleSheet.create({
         flex: 1,
         color: '#4b5563',
     },
-    exploreButton: {
-        backgroundColor: '#10b981',
-        padding: 16,
-        borderRadius: 12,
-        alignItems: 'center',
-        marginTop: 10,
-    },
-    exploreButtonText: {
-        color: 'white',
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
+    // exploreButton: {
+    //     backgroundColor: '#10b981',
+    //     padding: 16,
+    //     borderRadius: 12,
+    //     alignItems: 'center',
+    //     marginTop: 10,
+    // },
+    // exploreButtonText: {
+    //     color: 'white',
+    //     fontSize: 16,
+    //     fontWeight: 'bold',
+    // },
 });

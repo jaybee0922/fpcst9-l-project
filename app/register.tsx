@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { authHelper, userAPI } from '../services/api';
+import { userAPI } from '../services/api';
 
 export default function RegisterScreen() {
     const router = useRouter();
@@ -9,6 +9,7 @@ export default function RegisterScreen() {
     const [success, setSuccess] = useState(false);
     const [countdown, setCountdown] = useState(3);
     const [formData, setFormData] = useState({
+        fullName: '',
         email: '',
         password: '',
         confirmPassword: '',
@@ -22,12 +23,12 @@ export default function RegisterScreen() {
             }, 1000);
             return () => clearTimeout(timer);
         } else if (success && countdown === 0) {
-            router.replace('/(tabs)');
+            router.replace('/Welcome');
         }
     }, [success, countdown]);
 
     const validateForm = () => {
-        if (!formData.email || !formData.password || !formData.confirmPassword) {
+        if (!formData.fullName || !formData.email || !formData.password || !formData.confirmPassword) {
             Alert.alert('Error', 'Please fill in all required fields');
             return false;
         }
@@ -57,17 +58,18 @@ export default function RegisterScreen() {
             setLoading(true);
 
             const userData = {
+                fullName: formData.fullName,
                 email: formData.email,
                 password: formData.password,
-
             };
 
             console.log("Sending registration data:", userData);
 
             const response = await userAPI.register(userData);
 
-            await authHelper.storeToken(response.data.token);
-            await authHelper.storeUserData(response.data);
+            // Do NOT store token or userData to prevent auto-login
+            // await authHelper.storeToken(response.data.token);
+            // await authHelper.storeUserData(response.data);
 
             setSuccess(true);
             setCountdown(3);
@@ -97,7 +99,7 @@ export default function RegisterScreen() {
                     </View>
                     <Text style={styles.successTitle}>Account Created Successfully!</Text>
                     <Text style={styles.successMessage}>
-                        Welcome to Money Cluster! Redirecting you to the app...
+                        Welcome to Money Cluster! Redirecting you to login...
                     </Text>
 
                     <View style={styles.countdownContainer}>
@@ -109,9 +111,9 @@ export default function RegisterScreen() {
 
                     <TouchableOpacity
                         style={styles.continueButton}
-                        onPress={() => router.replace('/(tabs)')}
+                        onPress={() => router.replace('/Welcome')}
                     >
-                        <Text style={styles.continueButtonText}>Continue Now</Text>
+                        <Text style={styles.continueButtonText}>Go to Login</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -126,6 +128,16 @@ export default function RegisterScreen() {
             <Text style={styles.subtitle}>
                 Join our community of Filipinos sharing money-saving strategies
             </Text>
+
+            {/* Full Name Field */}
+            <Text style={styles.label}>Full Name *</Text>
+            <TextInput
+                style={styles.input}
+                placeholder="John Doe"
+                autoCapitalize="words"
+                value={formData.fullName}
+                onChangeText={(text) => setFormData({ ...formData, fullName: text })}
+            />
 
             {/* Email Field */}
             <Text style={styles.label}>Email Address *</Text>

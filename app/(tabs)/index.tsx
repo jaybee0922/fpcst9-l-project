@@ -1,8 +1,10 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { authHelper } from '../../services/api';
 
 interface User {
+  fullName: string;
   budget: number;
   location: {
     city: string;
@@ -20,6 +22,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [userCluster, setUserCluster] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     checkExistingUser();
@@ -27,10 +30,39 @@ export default function HomeScreen() {
 
   const checkExistingUser = async () => {
     try {
-      // pang test sa nako
-      console.log('Checking for existing user...');
+      setLoading(true);
+      const token = await authHelper.getToken();
+      if (!token) {
+        console.log('No token found, showing unregistered UI');
+        setUser(null);
+      } else {
+        const userData = await authHelper.getUserData();
+        if (userData) {
+          setUser(userData as User);
+          console.log('User found:', userData);
+        } else {
+          console.log('Token exists but no user data, logging out');
+          await authHelper.removeToken();
+          await authHelper.removeUserData();
+          setUser(null);
+        }
+      }
     } catch (error) {
-      console.log('No existing user found, showing registration');
+      console.error('Auth check error:', error);
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await authHelper.removeToken();
+      await authHelper.removeUserData();
+      setUser(null);
+      router.replace('/Welcome');
+    } catch (error) {
+      console.error('Logout error:', error);
     }
   };
 
@@ -47,96 +79,161 @@ export default function HomeScreen() {
     router.push('/create-post');
   };
 
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Money Cluster</Text>
-      <Text style={styles.subtitle}>Filipino Community Money Wisdom</Text>
-
-      {/* Show this if user is NOT registered */}
-      {!user && (
-        <View style={styles.registrationSection}>
-          <Text style={styles.welcomeText}>Welcome to Money Cluster! 🇵🇭</Text>
-          <Text style={styles.description}>
-            Join our community of Filipinos sharing proven money-saving strategies specific to your location and situation.
-          </Text>
-
-          <TouchableOpacity style={styles.primaryButton} onPress={navigateToCreatePost}>
-            <Text style={styles.primaryButtonText}>Share your tips</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.secondaryButton} onPress={navigateToExplore}>
-            <Text style={styles.secondaryButtonText}>Explore Community First</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Show this if user IS registered */}
+    <View style={styles.fullScreen}>
+      {/* Header with Logout Icon (only for logged-in users) */}
       {user && (
-        <View style={styles.userCard}>
-          <Text style={styles.cardTitle}>Welcome back!</Text>
-          <Text>Budget: ₱{user.budget}</Text>
-          <Text>Location: {user.location.city}, {user.location.region}</Text>
-          <Text>Situation: {user.demographics.situation}</Text>
-
-          <TouchableOpacity style={styles.actionButton} onPress={navigateToCreatePost}>
-            <Text style={styles.actionButtonText}>Share Your Strategy</Text>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Money Cluster</Text>
+          <TouchableOpacity style={styles.logoutIconContainer} onPress={handleLogout}>
+            <Image source={require('../../components/utils/exit.png')} style={styles.logoutIcon} />
           </TouchableOpacity>
         </View>
       )}
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>How It Works</Text>
-        <View style={styles.step}>
-          <Text style={styles.stepNumber}>1</Text>
-          <Text style={styles.stepText}>Share your money-saving strategies</Text>
-        </View>
-        <View style={styles.step}>
-          <Text style={styles.stepNumber}>2</Text>
-          <Text style={styles.stepText}>Get matched with similar Filipinos</Text>
-        </View>
-        <View style={styles.step}>
-          <Text style={styles.stepNumber}>3</Text>
-          <Text style={styles.stepText}>Discover proven tips from your cluster</Text>
-        </View>
-        <View style={styles.step}>
-          <Text style={styles.stepNumber}>4</Text>
-          <Text style={styles.stepText}>Rate and help others save money</Text>
-        </View>
-      </View>
+      <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent}>
+        {!user && (
+          <Text style={styles.subtitle}>Filipino Community Money Wisdom</Text>
+        )}
 
-      {/* Quick Stats Preview */}
-      <View style={styles.statsSection}>
-        <Text style={styles.sectionTitle}>Community Impact</Text>
-        <View style={styles.statsGrid}>
-          <View style={styles.stat}>
-            <Text style={styles.statNumber}>47+</Text>
-            <Text style={styles.statLabel}>Users</Text>
+        {/* Show this if user is NOT registered */}
+        {!user && (
+          <View style={styles.registrationSection}>
+            <Text style={styles.welcomeText}>Welcome to Money Cluster! 🇵🇭</Text>
+            <Text style={styles.description}>
+              Join our community of Filipinos sharing proven money-saving strategies specific to your location and situation.
+            </Text>
+
+            <TouchableOpacity style={styles.primaryButton} onPress={navigateToCreatePost}>
+              <Text style={styles.primaryButtonText}>Share your tips</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.secondaryButton} onPress={navigateToExplore}>
+              <Text style={styles.secondaryButtonText}>Explore Community First</Text>
+            </TouchableOpacity>
           </View>
-          <View style={styles.stat}>
-            <Text style={styles.statNumber}>12</Text>
-            <Text style={styles.statLabel}>Cities</Text>
+        )}
+
+        {/* Show this if user IS registered */}
+        {user && (
+          <View style={styles.userCard}>
+            <Text style={styles.cardTitle}>Welcome, {user.fullName}!</Text>
+            {/* <Text>Budget: ₱{user.budget}</Text>
+            <Text>Location: {user.location.city}, {user.location.region}</Text>
+            <Text>Situation: {user.demographics.situation}</Text> */}
+
+            <TouchableOpacity style={styles.actionButton} onPress={navigateToCreatePost}>
+              <Text style={styles.actionButtonText}>Share Your Strategy</Text>
+            </TouchableOpacity>
           </View>
-          <View style={styles.stat}>
-            <Text style={styles.statNumber}>89%</Text>
-            <Text style={styles.statLabel}>Success Rate</Text>
+        )}
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>How It Works</Text>
+          <View style={styles.step}>
+            <Text style={styles.stepNumber}>1</Text>
+            <Text style={styles.stepText}>Share your money-saving strategies</Text>
+          </View>
+          <View style={styles.step}>
+            <Text style={styles.stepNumber}>2</Text>
+            <Text style={styles.stepText}>Get matched with similar Filipinos</Text>
+          </View>
+          <View style={styles.step}>
+            <Text style={styles.stepNumber}>3</Text>
+            <Text style={styles.stepText}>Discover proven tips from your cluster</Text>
+          </View>
+          <View style={styles.step}>
+            <Text style={styles.stepNumber}>4</Text>
+            <Text style={styles.stepText}>Rate and help others save money</Text>
           </View>
         </View>
-      </View>
-    </ScrollView>
+
+        {/* Quick Stats Preview */}
+        <View style={styles.statsSection}>
+          <Text style={styles.sectionTitle}>Community Impact</Text>
+          <View style={styles.statsGrid}>
+            <View style={styles.stat}>
+              <Text style={styles.statNumber}>47+</Text>
+              <Text style={styles.statLabel}>Users</Text>
+            </View>
+            <View style={styles.stat}>
+              <Text style={styles.statNumber}>12</Text>
+              <Text style={styles.statLabel}>Cities</Text>
+            </View>
+            <View style={styles.stat}>
+              <Text style={styles.statNumber}>89%</Text>
+              <Text style={styles.statLabel}>Success Rate</Text>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  fullScreen: {
     flex: 1,
-    padding: 20,
     backgroundColor: '#f5f5f5',
-    marginTop: 50,
+    // marginTop: 50
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: 'white',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    marginTop: 50
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1e40af',
+  },
+  logoutIconContainer: {
+    padding: 8,
+  },
+  logoutIcon: {
+    width: 30 ,
+    height: 30  ,
+    borderColor: '#000000',
+    borderWidth: 1,
+    borderRadius: 50
+    // tintColor: '#ef4444',
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 20,
+  },
+  container: {
+    padding: 20,
+    marginTop: 0, // Adjusted since header handles top
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     textAlign: 'center',
+    marginTop: 20,
     marginBottom: 10,
     color: '#1e40af',
   },
@@ -206,6 +303,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
+    marginTop: 20
   },
   cardTitle: {
     fontSize: 20,
@@ -219,6 +317,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     marginTop: 15,
+    marginBottom: 10,
   },
   actionButtonText: {
     color: 'white',

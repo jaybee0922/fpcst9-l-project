@@ -4,14 +4,12 @@ import User from "../models/User.js";
 
 const router = express.Router();
 
-
 router.post("/register", async (req, res) => {
   try {
     console.log("=== REGISTRATION REQUEST ===");
     console.log("Body received:", req.body);
 
-    const { email, password } = req.body; 
-
+    const { fullName, email, password } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -20,31 +18,32 @@ router.post("/register", async (req, res) => {
         .json({ error: "User already exists with this email" });
     }
 
-
     const newUser = new User({
+      fullName,
       email,
       password,
-      clusterId: "ncr_students", 
+      clusterId: "ncr_students",
     });
 
     await newUser.save();
     console.log("User saved successfully:", {
+      fullName: newUser.fullName,
       email: newUser.email,
       clusterId: newUser.clusterId,
       anonymousId: newUser.anonymousId,
     });
 
-
     const token = generateToken(newUser._id);
 
     const userResponse = {
       _id: newUser._id,
+      fullName: newUser.fullName,
       anonymousId: newUser.anonymousId,
       email: newUser.email,
-      location: newUser.location, 
-      demographics: newUser.demographics, 
-      budget: newUser.budget, 
-      clusterId: newUser.clusterId, 
+      location: newUser.location,
+      demographics: newUser.demographics,
+      budget: newUser.budget,
+      clusterId: newUser.clusterId,
       trustScore: newUser.trustScore,
       token,
     };
@@ -74,6 +73,7 @@ router.post("/login", async (req, res) => {
 
     const userResponse = {
       _id: user._id,
+      fullName: user.fullName,
       anonymousId: user.anonymousId,
       email: user.email,
       location: user.location,
@@ -97,7 +97,6 @@ router.get("/profile", authMiddleware, async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-
 
 router.get("/:id/cluster", async (req, res) => {
   try {
