@@ -1,3 +1,4 @@
+// --------------------------- Database connection for hierarchical clustering
 import mongoose from "mongoose";
 
 const connectDB = async () => {

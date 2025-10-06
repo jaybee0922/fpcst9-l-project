@@ -1,3 +1,4 @@
+// --------------------------- Database for cluster 
 import mongoose from "mongoose";
 
 const clusterSchema = new mongoose.Schema({

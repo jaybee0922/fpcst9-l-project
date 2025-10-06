@@ -216,7 +216,7 @@ const saveClusters = async (clusters) => {
   }
 };
 
-// Fallback clustering if main method fails
+// ---------------------------  Fallback clustering if main method fails
 const fallbackClustering = async () => {
   console.log("Using fallback clustering...");
   const users = await User.find();

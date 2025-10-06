@@ -28,6 +28,7 @@ export default function PostsList({ posts, loading }: PostsListProps) {
 
 
 
+  // ---------------------------  to load data
   if (loading) {
     return (
       <View style={styles.loadingContainer}>

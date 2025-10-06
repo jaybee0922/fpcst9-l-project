@@ -1,8 +1,8 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import PostsList from '../../components/PostsList';
-import { clustersAPI, postsAPI } from '../../services/api';
+import { authHelper, clustersAPI, postsAPI } from '../../services/api';
 
 interface Cluster {
   clusterId: string;
@@ -34,10 +34,38 @@ export default function ExploreScreen() {
   const [selectedCluster, setSelectedCluster] = useState<string | null>(null);
   const [clusterPosts, setClusterPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
+  const [userFullName, setUserFullName] = useState('');
 
   useEffect(() => {
     loadClusters();
+    loadUserData();
   }, []);
+
+  const loadUserData = async () => {
+    try {
+      const userData = await authHelper.getUserData();
+      if (userData && userData.fullName) {
+        // Capitalize the full name
+        const capitalizedName = userData.fullName
+          .split(' ')
+          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(' ');
+        setUserFullName(capitalizedName);
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await authHelper.removeToken();
+      await authHelper.removeUserData();
+      router.replace('/Welcome');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   // Debug params
   useEffect(() => {
@@ -158,6 +186,7 @@ export default function ExploreScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
+        {/* Header with User Fullname and Exit Icon */}
         <View style={styles.header}>
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
             <Text style={styles.backButtonText}>←</Text>
@@ -168,7 +197,17 @@ export default function ExploreScreen() {
               : 'Explore Clusters'
             }
           </Text>
-          <View style={styles.headerSpacer} />
+          <View style={styles.headerRight}>
+            {userFullName ? (
+              <Text style={styles.userName}>{userFullName}</Text>
+            ) : null}
+            <TouchableOpacity style={styles.logoutIconContainer} onPress={handleLogout}>
+              <Image
+                source={require('../../assets/images/exit.png')}
+                style={styles.logoutIcon}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {!selectedCluster ? (
@@ -254,7 +293,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 16,
-    marginTop: 10,
+    marginTop: 70,
   },
   backButton: {
     padding: 8,
@@ -271,6 +310,27 @@ const styles = StyleSheet.create({
     color: '#1e40af',
     textAlign: 'center',
     flex: 1,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 15,
+  },
+  userName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    textTransform: 'capitalize',
+  },
+  logoutIconContainer: {
+    padding: 8,
+  },
+  logoutIcon: {
+    width: 30,
+    height: 30,
+    borderColor: '#000000',
+    borderWidth: 1,
+    borderRadius: 50
   },
   headerSpacer: {
     width: 40,
@@ -366,4 +426,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-

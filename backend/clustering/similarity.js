@@ -58,27 +58,27 @@ export const userSimilarity = (user1, user2) => {
 
   let totalSimilarity = 0;
 
-  // Budget similarity (normalized difference)
+  // ---------------------------  Budget similarity (normalized difference)
   const budgetDiff = Math.abs((user1.budget || 3000) - (user2.budget || 3000));
   const maxBudget = Math.max(user1.budget || 3000, user2.budget || 3000, 1);
   const budgetSimilarity = 1 - budgetDiff / maxBudget;
   totalSimilarity += budgetSimilarity * weights.budget;
 
-  // Location similarity
+  // ---------------------------  Location similarity
   const locationSimilarity = calculateLocationSimilarity(
     user1.location,
     user2.location
   );
   totalSimilarity += locationSimilarity * weights.location;
 
-  // Demographics similarity
+  // ---------------------------  Demographics similarity
   const demoSimilarity = calculateDemographicSimilarity(
     user1.demographics,
     user2.demographics
   );
   totalSimilarity += demoSimilarity * weights.demographics;
 
-  // Spending priorities similarity (Jaccard index)
+  // ---------------------------  Spending priorities similarity (Jaccard index)
   const priorities1 = user1.spendingPriorities || [];
   const priorities2 = user2.spendingPriorities || [];
   const prioritySimilarity = calculateJaccardSimilarity(
@@ -87,7 +87,7 @@ export const userSimilarity = (user1, user2) => {
   );
   totalSimilarity += prioritySimilarity * weights.priorities;
 
-  // Strategies similarity (Jaccard index)
+  // ---------------------------  Strategies similarity (Jaccard index)
   const strategies1 = user1.strategies || [];
   const strategies2 = user2.strategies || [];
   const strategySimilarity = calculateJaccardSimilarity(
@@ -124,6 +124,7 @@ const calculateLocationSimilarity = (loc1, loc2) => {
 
   return Math.min(similarity, 1);
 };
+
 
 /**
  * Group regions by island for broader similarity

@@ -3,12 +3,12 @@ import User from "../models/User.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
-// Generate JWT token
+// --------------------------- Generate JWT token
 export const generateToken = (userId) => {
   return jwt.sign({ userId }, JWT_SECRET, { expiresIn: "30d" });
 };
 
-// Verify JWT token middleware
+// --------------------------- Verify JWT token middleware
 export const authMiddleware = async (req, res, next) => {
   try {
     const token = req.header("Authorization")?.replace("Bearer ", "");

@@ -94,7 +94,7 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Money Cluster</Text>
           <TouchableOpacity style={styles.logoutIconContainer} onPress={handleLogout}>
-            <Image source={require('../../components/utils/exit.png')} style={styles.logoutIcon} />
+            <Image source={require('../../assets/images/exit.png')} style={styles.logoutIcon} />
           </TouchableOpacity>
         </View>
       )}
@@ -310,6 +310,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 15,
     color: '#1e40af',
+    textTransform: 'capitalize',
   },
   actionButton: {
     backgroundColor: '#10b981',

@@ -1,8 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import { Platform } from "react-native"; // ADD THIS IMPORT
+import { Platform } from "react-native";
 
-// Detect platform and use appropriate URL
+// --------------------------- Detect platform and use appropriate URL
 const getAPIBaseURL = () => {
   if (Platform.OS === "android") {
     return "http://10.0.2.2:5000/api";
@@ -11,14 +11,14 @@ const getAPIBaseURL = () => {
   }
 };
 
-const API_BASE_URL = getAPIBaseURL(); // USE THE DYNAMIC URL
+const API_BASE_URL = getAPIBaseURL();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
 });
 
-// Add token to requests automatically
+
 api.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem("userToken");
@@ -32,7 +32,7 @@ api.interceptors.request.use(
   }
 );
 
-// User API calls
+// ---------------------------  User API calls
 export const userAPI = {
   register: (userData) => api.post("/users/register", userData),
   login: (credentials) => api.post("/users/login", credentials),
@@ -40,7 +40,7 @@ export const userAPI = {
   getUserCluster: (userId) => api.get(`/users/${userId}/cluster`),
 };
 
-// Posts API calls
+// ---------------------------  Posts API calls
 export const postsAPI = {
   createPost: (postData) => api.post("/posts", postData),
   ratePost: (postId, ratingData) =>
@@ -48,13 +48,13 @@ export const postsAPI = {
   getClusterPosts: (clusterId) => api.get(`/posts/cluster/${clusterId}`),
 };
 
-// Clusters API calls
+// ---------------------------  Clusters API calls
 export const clustersAPI = {
   getAllClusters: () => api.get("/clusters"),
   getCluster: (clusterId) => api.get(`/clusters/${clusterId}`),
 };
 
-// Auth helper functions
+
 export const authHelper = {
   storeToken: async (token) => {
     try {

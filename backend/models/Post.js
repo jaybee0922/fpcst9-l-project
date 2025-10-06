@@ -1,3 +1,4 @@
+// --------------------------- database for posts
 import mongoose from "mongoose";
 
 const postSchema = new mongoose.Schema({
